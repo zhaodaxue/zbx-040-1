@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Stethoscope, Smile } from 'lucide-react';
 import { Patient } from '../types';
 import { countReviewNeeded, countPermanentTotal, animateNumber } from '../modules/statistics';
@@ -8,19 +8,32 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ patients }) => {
-  const [reviewCount, setReviewCount] = useState(0);
-  const [permanentCount, setPermanentCount] = useState(0);
-
   const reviewNeeded = countReviewNeeded(patients);
   const permanentTotal = countPermanentTotal(patients);
 
-  useEffect(() => {
-    animateNumber(reviewNeeded, 1000, setReviewCount);
-  }, [reviewNeeded]);
+  const [reviewCount, setReviewCount] = useState(reviewNeeded);
+  const [permanentCount, setPermanentCount] = useState(permanentTotal);
+
+  const mountedRef = useRef(false);
+  const prevReviewNeeded = useRef(reviewNeeded);
+  const prevPermanentTotal = useRef(permanentTotal);
 
   useEffect(() => {
-    animateNumber(permanentTotal, 1200, setPermanentCount);
-  }, [permanentTotal]);
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      prevReviewNeeded.current = reviewNeeded;
+      prevPermanentTotal.current = permanentTotal;
+      return;
+    }
+    if (prevReviewNeeded.current !== reviewNeeded) {
+      animateNumber(reviewNeeded, 1000, setReviewCount);
+      prevReviewNeeded.current = reviewNeeded;
+    }
+    if (prevPermanentTotal.current !== permanentTotal) {
+      animateNumber(permanentTotal, 1200, setPermanentCount);
+      prevPermanentTotal.current = permanentTotal;
+    }
+  }, [reviewNeeded, permanentTotal]);
 
   return (
     <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400 text-white py-6 px-8 shadow-lg">

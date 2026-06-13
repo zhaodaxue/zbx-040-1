@@ -47,7 +47,7 @@ export default {
           '0%': { transform: 'scale(0.3)', opacity: '0' },
           '50%': { transform: 'scale(1.05)' },
           '70%': { transform: 'scale(0.9)' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
+          '100%': { transform: 'none', opacity: '1' },
         },
         fadeInUp: {
           '0%': { transform: 'translateY(20px)', opacity: '0' },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Filter } from 'lucide-react';
-import { StatusFilter, Patient } from '../types';
+import { StatusFilter, Patient, ToothStatus } from '../types';
 import { getAvailableFilters, getFilterCount, getStatusColor } from '../modules/filters';
 
 interface FilterBarProps {
@@ -29,6 +29,20 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               const count = getFilterCount(patients, filter.value);
               const isActive = currentFilter === filter.value;
               const color = getStatusColor(filter.value);
+              const isNormalStatus = filter.value === ToothStatus.NORMAL;
+
+              const activeBgColor = isNormalStatus ? '#616161' : color;
+              const activeTextColor = isNormalStatus ? '#FFFFFF' : '#FFFFFF';
+              const inactiveDotBg = isNormalStatus ? '#BDBDBD' : color;
+              const inactiveDotBorder = isNormalStatus
+                ? '#757575'
+                : isActive
+                  ? 'rgba(255,255,255,0.55)'
+                  : 'transparent';
+              const inactiveTextColor = isNormalStatus ? 'text-gray-800' : 'text-gray-700';
+              const inactiveCountBg = isNormalStatus
+                ? 'bg-gray-400/25 text-gray-700 border border-gray-400/40'
+                : 'bg-gray-200 text-gray-500';
 
               return (
                 <button
@@ -39,21 +53,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     transition-all duration-300 ease-out
                     ${isActive
                       ? 'text-white shadow-lg scale-105'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-102'
+                      : `bg-gray-100 ${inactiveTextColor} hover:bg-gray-200 hover:scale-102`
                     }
                   `}
-                  style={isActive ? { backgroundColor: color } : {}}
+                  style={isActive ? { backgroundColor: activeBgColor, color: activeTextColor } : {}}
                 >
                   <span className="relative z-10 flex items-center gap-2">
                     <span
-                      className="w-3 h-3 rounded-full border-2 border-white/50"
-                      style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.5)' : color }}
+                      className="w-3 h-3 rounded-full border-2 shrink-0"
+                      style={{
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.55)' : inactiveDotBg,
+                        borderColor: isActive ? 'rgba(255,255,255,0.6)' : inactiveDotBorder,
+                      }}
                     />
                     {filter.label}
                     <span
                       className={`
-                        px-2 py-0.5 rounded-full text-xs
-                        ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'}
+                        px-2 py-0.5 rounded-full text-xs font-medium
+                        ${isActive ? 'bg-white/20 text-white' : inactiveCountBg}
                       `}
                     >
                       {count}
