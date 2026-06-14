@@ -3,24 +3,25 @@ import { TopBar } from '../components/TopBar';
 import { FilterBar } from '../components/FilterBar';
 import { PatientCard } from '../components/PatientCard';
 import { PatientModal } from '../components/PatientModal';
-import { mockPatients } from '../data/mockData';
-import { StatusFilter, Patient } from '../types';
+import { StatusFilter } from '../types';
 import { filterByStatus, sortPatientsByNeedsReview } from '../modules/filters';
+import { useAppStore } from '../store/useAppStore';
 
 const Home: React.FC = () => {
+  const patients = useAppStore((s) => s.patients);
   const [currentFilter, setCurrentFilter] = useState<StatusFilter>('ALL');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
   const filteredPatients = useMemo(() => {
-    const filtered = filterByStatus(mockPatients, currentFilter);
+    const filtered = filterByStatus(patients, currentFilter);
     return sortPatientsByNeedsReview(filtered);
-  }, [currentFilter]);
+  }, [patients, currentFilter]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-green-50/30">
-      <TopBar patients={mockPatients} />
+      <TopBar patients={patients} />
       <FilterBar
-        patients={mockPatients}
+        patients={patients}
         currentFilter={currentFilter}
         onFilterChange={setCurrentFilter}
       />
@@ -43,7 +44,7 @@ const Home: React.FC = () => {
                 key={patient.id}
                 patient={patient}
                 index={index}
-                onClick={() => setSelectedPatient(patient)}
+                onClick={() => setSelectedPatientId(patient.id)}
               />
             ))}
           </div>
@@ -65,15 +66,15 @@ const Home: React.FC = () => {
         )}
 
         <div className="mt-16 text-center text-gray-400 text-sm">
-          <p>💡 提示：橙色闪烁的牙齿表示已松动，需要及时复查</p>
-          <p className="mt-1">点击卡片可以查看详细的牙位信息</p>
+          <p>💡 提示：橙色闪烁表示已松动需复查；红色闪烁为重点关注</p>
+          <p className="mt-1">点击卡片可以查看详细牙位并登记换牙进度</p>
         </div>
       </main>
 
-      {selectedPatient && (
+      {selectedPatientId && (
         <PatientModal
-          patient={selectedPatient}
-          onClose={() => setSelectedPatient(null)}
+          patientId={selectedPatientId}
+          onClose={() => setSelectedPatientId(null)}
         />
       )}
     </div>

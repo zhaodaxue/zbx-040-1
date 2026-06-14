@@ -1,18 +1,33 @@
-import React, { useEffect } from 'react';
-import { X, User, Calendar } from 'lucide-react';
-import { Patient } from '../types';
+import React, { useEffect, useCallback } from 'react';
+import { X, User, Calendar, Sparkles, AlertTriangle } from 'lucide-react';
+import { Patient, ToothRow } from '../types';
 import { ToothArc } from './ToothArc';
 import { ToothGrid } from './ToothGrid';
 import { getPatientStatusSummary } from '../modules/statistics';
 import { toothStatusList } from '../data/mockData';
+import { useAppStore } from '../store/useAppStore';
+import { patientNeedsFocus } from '../modules/toothProgress';
 
 interface PatientModalProps {
-  patient: Patient;
+  patientId: string;
   onClose: () => void;
 }
 
-export const PatientModal: React.FC<PatientModalProps> = ({ patient, onClose }) => {
-  const summary = getPatientStatusSummary(patient);
+export const PatientModal: React.FC<PatientModalProps> = ({ patientId, onClose }) => {
+  const patients = useAppStore((s) => s.patients);
+  const advanceToothStatus = useAppStore((s) => s.advanceToothStatus);
+
+  const patient = patients.find((p) => p.id === patientId) || null;
+  const summary = patient ? getPatientStatusSummary(patient) : null;
+  const needsFocus = patient ? patientNeedsFocus(patient) : false;
+
+  const handleToothClick = useCallback(
+    (row: ToothRow, index: number) => {
+      if (!patient) return;
+      advanceToothStatus(patient.id, row, index);
+    },
+    [patient, advanceToothStatus]
+  );
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -20,12 +35,14 @@ export const PatientModal: React.FC<PatientModalProps> = ({ patient, onClose }) 
     };
     document.addEventListener('keydown', handleEscape);
     document.body.style.overflow = 'hidden';
-    
+
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
   }, [onClose]);
+
+  if (!patient || !summary) return null;
 
   return (
     <div
@@ -33,7 +50,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({ patient, onClose }) 
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
-      
+
       <div
         className="relative bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-bounce-in"
         onClick={(e) => e.stopPropagation()}
@@ -59,9 +76,23 @@ export const PatientModal: React.FC<PatientModalProps> = ({ patient, onClose }) 
               <User className="w-12 h-12" style={{ color: patient.avatar }} />
             </div>
             <div className="flex-1">
-              <h2 className="font-display text-4xl text-gray-800 mb-2">
-                {patient.nickname}
-              </h2>
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h2 className="font-display text-4xl text-gray-800">
+                  {patient.nickname}
+                </h2>
+                {needsFocus && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    重点关注
+                  </div>
+                )}
+                {summary.needsReview && !needsFocus && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    待复查
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-6 text-gray-500">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
@@ -87,29 +118,45 @@ export const PatientModal: React.FC<PatientModalProps> = ({ patient, onClose }) 
           </div>
 
           <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-3xl p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4 text-center">
-              口腔全景牙位图
-            </h3>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">
+                口腔全景牙位图
+              </h3>
+              <span className="text-xs text-primary-600 bg-primary-50 px-2 py-1 rounded-full border border-primary-200">
+                点击牙齿推进状态
+              </span>
+            </div>
             <div className="flex justify-center">
               <ToothArc
                 upperTeeth={patient.upperTeeth}
                 lowerTeeth={patient.lowerTeeth}
+                interactive={true}
+                onToothClick={handleToothClick}
               />
             </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="bg-gray-50 rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                牙位网格详情
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  牙位网格详情
+                </h3>
+                <span className="text-xs text-primary-600 bg-primary-50 px-2 py-1 rounded-full">
+                  点击推进
+                </span>
+              </div>
               <ToothGrid
                 upperTeeth={patient.upperTeeth}
                 lowerTeeth={patient.lowerTeeth}
                 size="large"
                 showLabels={true}
                 interactive={true}
+                onToothClick={handleToothClick}
               />
+              <p className="mt-4 text-xs text-gray-400 text-center">
+                推进顺序：未松动 → 已松动 → 已脱落 → 恒牙已萌出
+              </p>
             </div>
 
             <div>

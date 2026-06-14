@@ -1,4 +1,5 @@
 import { Patient, ToothStatus, PatientStatusSummary } from '../types';
+import { patientNeedsFocus } from './toothProgress';
 
 export const countToothByStatus = (
   patients: Patient[],
@@ -25,6 +26,7 @@ export const countPermanentTotal = (patients: Patient[]): number => {
 
 export const getPatientStatusSummary = (patient: Patient): PatientStatusSummary => {
   const allTeeth = [...patient.upperTeeth, ...patient.lowerTeeth];
+  const needsFocus = patientNeedsFocus(patient);
   
   return {
     normal: allTeeth.filter(t => t === ToothStatus.NORMAL).length,
@@ -32,6 +34,7 @@ export const getPatientStatusSummary = (patient: Patient): PatientStatusSummary 
     fallen: allTeeth.filter(t => t === ToothStatus.FALLEN).length,
     permanent: allTeeth.filter(t => t === ToothStatus.PERMANENT).length,
     needsReview: allTeeth.some(t => t === ToothStatus.LOOSE),
+    needsFocus,
   };
 };
 

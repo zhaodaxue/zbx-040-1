@@ -1,10 +1,11 @@
 import React from 'react';
-import { AlertCircle, User } from 'lucide-react';
+import { AlertCircle, User, AlertTriangle } from 'lucide-react';
 import { Patient } from '../types';
 import { ToothGrid } from './ToothGrid';
 import { getPatientStatusSummary } from '../modules/statistics';
 import { hasToothStatus } from '../modules/filters';
 import { ToothStatus } from '../types';
+import { patientNeedsFocus } from '../modules/toothProgress';
 
 interface PatientCardProps {
   patient: Patient;
@@ -15,6 +16,7 @@ interface PatientCardProps {
 export const PatientCard: React.FC<PatientCardProps> = ({ patient, index, onClick }) => {
   const summary = getPatientStatusSummary(patient);
   const needsReview = hasToothStatus(patient, ToothStatus.LOOSE);
+  const needsFocus = patientNeedsFocus(patient);
 
   return (
     <div
@@ -24,7 +26,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, index, onClic
         transition-all duration-500 ease-out cursor-pointer
         hover:-translate-y-2 hover:scale-[1.02]
         animate-fade-in-up overflow-hidden
-        ${needsReview ? 'ring-2 ring-orange-300/50' : ''}
+        ${needsFocus ? 'ring-2 ring-red-400/60 shadow-red-100' : needsReview ? 'ring-2 ring-orange-300/50' : ''}
       `}
       style={{ animationDelay: `${index * 0.1}s` }}
     >
@@ -32,7 +34,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, index, onClic
         className="h-3 relative"
         style={{ backgroundColor: patient.avatar }}
       >
-        {needsReview && (
+        {needsFocus && (
+          <div className="absolute -right-1 -top-1 animate-pulse">
+            <div className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+              <AlertTriangle className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        )}
+        {!needsFocus && needsReview && (
           <div className="absolute -right-1 -top-1 animate-pulse">
             <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-lg">
               <AlertCircle className="w-4 h-4 text-white" />
@@ -60,12 +69,20 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, index, onClic
             </div>
           </div>
 
-          {needsReview && (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium animate-pulse">
-              <span className="w-2 h-2 bg-orange-500 rounded-full" />
-              待复查
-            </div>
-          )}
+          <div className="flex flex-col gap-1 items-end">
+            {needsFocus && (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium animate-pulse">
+                <span className="w-2 h-2 bg-red-500 rounded-full" />
+                重点关注
+              </div>
+            )}
+            {!needsFocus && needsReview && (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-medium animate-pulse">
+                <span className="w-2 h-2 bg-orange-500 rounded-full" />
+                待复查
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="bg-gray-50 rounded-2xl p-4 mb-4">
@@ -97,7 +114,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patient, index, onClic
 
         <div className="mt-4 text-center">
           <span className="text-sm text-primary-500 font-medium group-hover:text-primary-600 transition-colors">
-            点击查看详情 →
+            点击查看详情 / 登记 →
           </span>
         </div>
       </div>

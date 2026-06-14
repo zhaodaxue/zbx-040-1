@@ -6,6 +6,8 @@ import { getToothPositionName, getToothLabel, calculateArcPosition } from '../mo
 interface ToothArcProps {
   upperTeeth: ToothStatus[];
   lowerTeeth: ToothStatus[];
+  interactive?: boolean;
+  onToothClick?: (row: 'upper' | 'lower', index: number) => void;
 }
 
 interface HoverInfo {
@@ -20,7 +22,12 @@ const BASE_HEIGHT = 420;
 const TOOTH_SIZE = 44;
 const SAFE_MARGIN = 12;
 
-export const ToothArc: React.FC<ToothArcProps> = ({ upperTeeth, lowerTeeth }) => {
+export const ToothArc: React.FC<ToothArcProps> = ({
+  upperTeeth,
+  lowerTeeth,
+  interactive = false,
+  onToothClick,
+}) => {
   const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(BASE_WIDTH);
@@ -123,7 +130,7 @@ export const ToothArc: React.FC<ToothArcProps> = ({ upperTeeth, lowerTeeth }) =>
       return (
         <div
           key={key}
-          className="absolute cursor-pointer z-10"
+          className={`absolute z-10 ${interactive ? 'cursor-pointer' : ''}`}
           style={{
             left: x,
             top: y,
@@ -153,6 +160,11 @@ export const ToothArc: React.FC<ToothArcProps> = ({ upperTeeth, lowerTeeth }) =>
           onMouseLeave={() => {
             setHoveredKey(null);
             setHoverInfo(null);
+          }}
+          onClick={() => {
+            if (interactive) {
+              onToothClick?.(isUpper ? 'upper' : 'lower', index);
+            }
           }}
         >
           <ToothIcon status={status} size={TOOTH_SIZE} showAnimation={true} />

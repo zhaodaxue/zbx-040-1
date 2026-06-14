@@ -1,5 +1,6 @@
 import { Patient, ToothStatus, StatusFilter, FilterOption } from '../types';
 import { toothStatusList } from '../data/mockData';
+import { patientNeedsFocus } from './toothProgress';
 
 export const hasToothStatus = (patient: Patient, status: ToothStatus): boolean => {
   const hasUpper = patient.upperTeeth.some(t => t === status);
@@ -42,11 +43,15 @@ export const getFilterCount = (patients: Patient[], filter: StatusFilter): numbe
 
 export const sortPatientsByNeedsReview = (patients: Patient[]): Patient[] => {
   return [...patients].sort((a, b) => {
-    const aNeedsReview = hasToothStatus(a, ToothStatus.LOOSE);
-    const bNeedsReview = hasToothStatus(b, ToothStatus.LOOSE);
-    
-    if (aNeedsReview && !bNeedsReview) return -1;
-    if (!aNeedsReview && bNeedsReview) return 1;
+    const aFocus = patientNeedsFocus(a);
+    const bFocus = patientNeedsFocus(b);
+    const aReview = hasToothStatus(a, ToothStatus.LOOSE);
+    const bReview = hasToothStatus(b, ToothStatus.LOOSE);
+
+    const rankA = aFocus ? 0 : aReview ? 1 : 2;
+    const rankB = bFocus ? 0 : bReview ? 1 : 2;
+
+    if (rankA !== rankB) return rankA - rankB;
     return 0;
   });
 };
